@@ -8,6 +8,7 @@ namespace MgsFontGenDX
 {
     public static class Program
     {
+        private const int DefaultBatchSize = 6000;
         private const int DefaultFontSize = 38;
         private const int DefaultBaselineOriginX = 1;
         private const int DefaultBaselineOriginY = -7;
@@ -56,8 +57,8 @@ namespace MgsFontGenDX
             charset = new string(charset.Where(x => x != '\r' && x != '\t').ToArray());
             var compoundCharTable = ReadCompoundCharacterTable(arguments.CompoundCharTableFileName);
 
-            const int batchSize_outline = 6000;//5440;
-            const int batchSize_font = 6000;
+            const int batchSize_outline = DefaultBatchSize;//5440;
+            const int batchSize_font = DefaultBatchSize;
             using (var textRenderer = new TextRenderer())
             using (var widthTableFile = File.Create("widths.bin"))
             using (var widthWriter = new BinaryWriter(widthTableFile))
@@ -75,11 +76,11 @@ namespace MgsFontGenDX
                     {
                         byte[] widths_batch;
                         var font = textRenderer.GenerateBitmapFont(batch_font, compoundCharTable, arguments.ImageFormat, out widths_batch,
-                            false, arguments.FontFamily, arguments.FontSize, arguments.BaselineOriginX, arguments.BaselineOriginY);
+                            false, arguments.FontFamily, arguments.FontSize, arguments.BaselineOriginX, arguments.BaselineOriginY, arguments.DrawGrid);
 
                         byte[] _;
                         var outline = textRenderer.GenerateBitmapFont(batch_outline, compoundCharTable, arguments.ImageFormat, out _,
-                            true, arguments.FontFamily, arguments.FontSize, arguments.BaselineOriginX + 4, arguments.BaselineOriginY + 4);
+                            true, arguments.FontFamily, arguments.FontSize, arguments.BaselineOriginX + 4, arguments.BaselineOriginY + 4, arguments.DrawGrid);
 
                         font.CopyTo(outputFile);
                         font.Dispose();
@@ -123,6 +124,7 @@ namespace MgsFontGenDX
             string strImageFormat;
             string strFontSize, strOffsetX, strOffsetY;
             string strBaselineOriginX, strBaselineOriginY;
+            string drawGrid;
             Arguments parsedArgs;
             try
             {
@@ -140,7 +142,7 @@ namespace MgsFontGenDX
                 dictionary.TryGetValue("offsety", out strOffsetY);
                 dictionary.TryGetValue("baseline-originx", out strBaselineOriginX);
                 dictionary.TryGetValue("baseline-originy", out strBaselineOriginY);
-
+                dictionary.TryGetValue("draw-grid", out drawGrid);
                 switch ("." + strImageFormat?.ToLowerInvariant())
                 {
                     case DdsExtension:
@@ -159,6 +161,7 @@ namespace MgsFontGenDX
                 parsedArgs.OffsetY = int.Parse(strOffsetY ?? "0");
                 parsedArgs.BaselineOriginX = int.Parse(strBaselineOriginX ?? DefaultBaselineOriginX.ToString());
                 parsedArgs.BaselineOriginY = int.Parse(strBaselineOriginY ?? DefaultBaselineOriginY.ToString());
+                parsedArgs.DrawGrid = drawGrid.Length > 0;
             }
             catch
             {
@@ -198,6 +201,7 @@ namespace MgsFontGenDX
             public int OffsetY { get; set; }
             public int BaselineOriginX { get; set; }
             public int BaselineOriginY { get; set; }
+            public bool DrawGrid {  get; set; }
         }
 
         private static ImmutableDictionary<int, string> ReadCompoundCharacterTable(string fileName)

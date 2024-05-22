@@ -13,6 +13,7 @@ namespace MgsFontGenDX
 {
     public sealed class TextRenderer : RendererBase
     {
+        private const int BitmapDefaultHeight = 3840;
         private const int ColumnCount = 64;
         private const int NormalCellWidth = 48;
         private const int NormalCellHeight = 48;
@@ -42,25 +43,25 @@ namespace MgsFontGenDX
         }
 
         public Stream GenerateBitmapFont(string characters, ImmutableDictionary<int, string> puaCharacters, ImageFormat format,
-            out byte[] widths, bool drawOutline, string fontFamily, int fontSize, int baselineOriginX, int baselineOriginY)
+            out byte[] widths, bool drawOutline, string fontFamily, int fontSize, int baselineOriginX, int baselineOriginY, bool drawGridLines)
         {
             _cellWidth = drawOutline ? OutlineCellWidth : NormalCellWidth;
             _cellHeight = drawOutline ? OutlineCellHeight : NormalCellHeight;
             int bitmapWidth = _cellWidth * ColumnCount;
-            int bitmapHeight = 4096;
+            int bitmapHeight = BitmapDefaultHeight;
 
             var bitmapProperties = new BitmapProperties1(DevicePixelFormat, Dpi, Dpi, BitmapOptions.Target);
             var containerGuid = format == ImageFormat.Png ? ContainerFormatGuids.Png : ContainerFormatGuids.Dds;
             using (var fontBitmap = new Bitmap1(DeviceContext, new Size2(bitmapWidth, bitmapHeight), bitmapProperties))
             {
-                DrawCharacters(fontBitmap, characters, puaCharacters, drawOutline, 0, 0, fontFamily, fontSize, baselineOriginX, baselineOriginY);
+                DrawCharacters(fontBitmap, characters, puaCharacters, drawOutline, 0, 0, fontFamily, fontSize, baselineOriginX, baselineOriginY, drawGridLines);
                 widths = _widths;
                 return EncodeBitmap(fontBitmap, containerGuid);
             }
         }
 
         private void DrawCharacters(Bitmap1 target, string characters, ImmutableDictionary<int, string> puaCharacters,
-            bool drawOutline, int offsetX, int offsetY, string fontFamily, int fontSize, int baselineOriginX, int baselineOriginY)
+            bool drawOutline, int offsetX, int offsetY, string fontFamily, int fontSize, int baselineOriginX, int baselineOriginY, bool drawGridLines)
         {
             _drawingOutline = drawOutline;
             _puaCharacters = puaCharacters;
@@ -77,9 +78,7 @@ namespace MgsFontGenDX
                 _textFormat.WordWrapping = WordWrapping.NoWrap;
 
                 DeviceContext.BeginDraw();
-#if DEBUG
-                DrawGridLines();
-#endif
+                if (drawGridLines) DrawGridLines();
 
                 DeviceContext.Transform = Matrix3x2.Translation(offsetX, offsetY);
                 int i = 0;
