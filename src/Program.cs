@@ -52,11 +52,12 @@ namespace MgsFontGenDX
         private static void GenerateFont(Arguments arguments)
         {
             string extension = arguments.ImageFormat == ImageFormat.Png ? PngExtenstion : DdsExtension;
-            var charset = File.ReadAllText(arguments.CharsetFileName);
+            string charset = File.ReadAllText(arguments.CharsetFileName);
+            charset = new string(charset.Where(x => x != '\r' && x != '\t').ToArray());
             var compoundCharTable = ReadCompoundCharacterTable(arguments.CompoundCharTableFileName);
 
-            const int batchSize_outline = 4544;//5440;
-            const int batchSize_font = 5440;
+            const int batchSize_outline = 6000;//5440;
+            const int batchSize_font = 6000;
             using (var textRenderer = new TextRenderer())
             using (var widthTableFile = File.Create("widths.bin"))
             using (var widthWriter = new BinaryWriter(widthTableFile))

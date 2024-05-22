@@ -6,6 +6,8 @@ using System;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace MgsFontGenDX
 {
@@ -44,9 +46,8 @@ namespace MgsFontGenDX
         {
             _cellWidth = drawOutline ? OutlineCellWidth : NormalCellWidth;
             _cellHeight = drawOutline ? OutlineCellHeight : NormalCellHeight;
-            int rowCount = (int)Math.Ceiling((double)characters.Length / ColumnCount);
             int bitmapWidth = _cellWidth * ColumnCount;
-            int bitmapHeight = 4 * (int)Math.Ceiling((double)_cellHeight * rowCount / 4);
+            int bitmapHeight = 4096;
 
             var bitmapProperties = new BitmapProperties1(DevicePixelFormat, Dpi, Dpi, BitmapOptions.Target);
             var containerGuid = format == ImageFormat.Png ? ContainerFormatGuids.Png : ContainerFormatGuids.Dds;
@@ -81,17 +82,24 @@ namespace MgsFontGenDX
 #endif
 
                 DeviceContext.Transform = Matrix3x2.Translation(offsetX, offsetY);
-                for (int i = 0; i < characters.Length; i += ColumnCount)
+                int i = 0;
+                while (i < characters.Length)
                 {
-                    int currentRowLength = Math.Min(ColumnCount, characters.Length - i);
-                    string currentRow = characters.Substring(i, currentRowLength);
-
+                    string currentRow = "";
+                    if (characters[i] == '\n') i++;
+                    for (int j = 0; j < ColumnCount && i + j < characters.Length; j++)
+                    {
+                        if (characters[i + j] != '\n') currentRow += characters[i + j];
+                        else
+                        {
+                            break;
+                        }
+                    }
                     DrawRow(currentRow);
-
                     var transform = Matrix3x2.Multiply(DeviceContext.Transform, Matrix3x2.Translation(0, _cellHeight));
                     DeviceContext.Transform = transform;
+                    i += currentRow.Length;
                 }
-
                 DeviceContext.EndDraw();
             }
 
@@ -158,7 +166,7 @@ namespace MgsFontGenDX
         private byte Measure(string character, TextLayout layout, bool stretched)
         {
             double multiplier = stretched ? GameWidthMultiplier * character.Length : GameWidthMultiplier;
-            return  (byte)(Math.Ceiling(layout.Metrics.WidthIncludingTrailingWhitespace / multiplier) + 1);
+            return  (byte)(Math.Ceiling(layout.Metrics.WidthIncludingTrailingWhitespace / multiplier) + 4 + 1);
         }
 
         private void DrawCompoundCharacter(string compoundCharacter, TextLayout layout)
