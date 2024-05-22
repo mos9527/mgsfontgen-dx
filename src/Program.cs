@@ -9,6 +9,7 @@ namespace MgsFontGenDX
     public static class Program
     {
         private const int DefaultBatchSize = 6000;
+        private const int DefaultOutlineBatchSize = 4000;
         private const int DefaultFontSize = 38;
         private const int DefaultBaselineOriginX = 1;
         private const int DefaultBaselineOriginY = -7;
@@ -57,35 +58,43 @@ namespace MgsFontGenDX
             charset = new string(charset.Where(x => x != '\r' && x != '\t').ToArray());
             var compoundCharTable = ReadCompoundCharacterTable(arguments.CompoundCharTableFileName);
 
-            const int batchSize_outline = DefaultBatchSize;//5440;
             const int batchSize_font = DefaultBatchSize;
+            const int batchSize_outline = DefaultOutlineBatchSize;
             using (var textRenderer = new TextRenderer())
             using (var widthTableFile = File.Create("widths.bin"))
             using (var widthWriter = new BinaryWriter(widthTableFile))
             {
-                int batchCount = (int)Math.Ceiling((double)charset.Length / batchSize_outline);
-                for (int i = 0; i < batchCount; i++)
+                int fontBatches = (int)Math.Ceiling((double)charset.Length / batchSize_font);
+                int outlineBatches = (int)Math.Ceiling((double)charset.Length / batchSize_outline);
+
+                for (int i = 0; i < outlineBatches; i++)
                 {
-                    string batch_outline = charset.Substring(i * batchSize_outline, Math.Min((i + 1) * batchSize_outline, charset.Length - i  * batchSize_outline));
+                    string batch_outline = charset.Substring(i * batchSize_outline, Math.Min((i + 1) * batchSize_outline, charset.Length - i * batchSize_outline));
+                    string outlineFileName = OutlineName + $"_{(char)('A' + i)}" + extension;
+                    using (var outlineFile = File.Create(outlineFileName))
+                    {
+                        byte[] widths_batch;
+                        var outline = textRenderer.GenerateBitmapFont(batch_outline, compoundCharTable, arguments.ImageFormat, out widths_batch,
+                            true, arguments.FontFamily, arguments.FontSize, arguments.BaselineOriginX + 4, arguments.BaselineOriginY + 4, arguments.DrawGrid);
+
+                        outline.CopyTo(outlineFile);
+                        outline.Dispose();
+                    }
+
+                }
+                for (int i = 0; i < fontBatches; i++)
+                {      
                     string batch_font = charset.Substring(i * batchSize_font, Math.Min((i + 1) * batchSize_font, charset.Length - i * batchSize_font));
                     string fontFileName = OutputName + $"_{(char)('A' + i)}" + extension;
-                    string outlineFileName = OutlineName + $"_{(char)('A' + i)}" + extension;
 
                     using (var outputFile = File.Create(fontFileName))
-                    using (var outlineFile = File.Create(outlineFileName))
                     {
                         byte[] widths_batch;
                         var font = textRenderer.GenerateBitmapFont(batch_font, compoundCharTable, arguments.ImageFormat, out widths_batch,
                             false, arguments.FontFamily, arguments.FontSize, arguments.BaselineOriginX, arguments.BaselineOriginY, arguments.DrawGrid);
 
-                        byte[] _;
-                        var outline = textRenderer.GenerateBitmapFont(batch_outline, compoundCharTable, arguments.ImageFormat, out _,
-                            true, arguments.FontFamily, arguments.FontSize, arguments.BaselineOriginX + 4, arguments.BaselineOriginY + 4, arguments.DrawGrid);
-
                         font.CopyTo(outputFile);
                         font.Dispose();
-                        outline.CopyTo(outlineFile);
-                        outline.Dispose();
 
                         widthWriter.Write(widths_batch);
                     }
@@ -161,7 +170,7 @@ namespace MgsFontGenDX
                 parsedArgs.OffsetY = int.Parse(strOffsetY ?? "0");
                 parsedArgs.BaselineOriginX = int.Parse(strBaselineOriginX ?? DefaultBaselineOriginX.ToString());
                 parsedArgs.BaselineOriginY = int.Parse(strBaselineOriginY ?? DefaultBaselineOriginY.ToString());
-                parsedArgs.DrawGrid = drawGrid.Length > 0;
+                parsedArgs.DrawGrid = int.Parse(drawGrid ?? "0") > 0;
             }
             catch
             {

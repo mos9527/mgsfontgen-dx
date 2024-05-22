@@ -2,7 +2,7 @@
   "profiles": {
     "MgsFontGenDX": {
       "commandName": "Project",
-      "commandLineArgs": "generate --charset .\\Charset.utf8 --compound-characters .\\CompoundCharacters.tbl --font-family \"Noto Sans CJK JP\" --image-format dds",
+      "commandLineArgs": "generate --charset .\\Charset_zhs.utf8 --compound-characters .\\CompoundCharacters.tbl --font-family \"Noto Sans CJK JP\" --image-format dds",
       "workingDirectory": "C:\\Users\\mos9527\\mgsfontgen-dx\\zero"
     }
   }

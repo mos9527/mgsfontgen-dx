@@ -1,1 +1,1 @@
-..\bin\Release\net461\mgsfontgen-dx generate --charset .\Charset_zhs.utf8 --compound-characters .\CompoundCharacters.tbl --font-family "New Cinema x Deng Xian D" --font-size 42 --draw-grid 1 --image-format dds
+..\bin\Release\net461\mgsfontgen-dx generate --charset .\Charset_zhs.utf8 --compound-characters .\CompoundCharacters.tbl --font-family "Noto Sans CJK JP" --font-size 40 --image-format dds
