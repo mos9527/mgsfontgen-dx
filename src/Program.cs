@@ -9,7 +9,7 @@ namespace MgsFontGenDX
     public static class Program
     {
         private const int DefaultBatchSize = 6000;
-        private const int DefaultOutlineBatchSize = 4000;
+        private const int DefaultOutlineBatchSize = 6000;
         private const int DefaultFontSize = 38;
         private const int DefaultBaselineOriginX = 1;
         private const int DefaultBaselineOriginY = -7;

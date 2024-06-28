@@ -13,7 +13,7 @@ namespace MgsFontGenDX
 {
     public sealed class TextRenderer : RendererBase
     {
-        private const int BitmapDefaultHeight = 4000;
+        private const int BitmapDefaultHeight = 4200;
         private const int ColumnCount = 64;
         private const int NormalCellWidth = 48;
         private const int NormalCellHeight = 48;
